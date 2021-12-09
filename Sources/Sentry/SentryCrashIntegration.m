@@ -159,6 +159,8 @@ SentryCrashIntegration ()
         installationToken = 0;
     }
     [self.crashAdapter deactivateAsyncHooks];
+    
+    [NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
 - (void)configureScope
@@ -228,6 +230,9 @@ SentryCrashIntegration ()
             [deviceData setValue:systemInfo[@"storageSize"] forKey:@"storage_size"];
             [deviceData setValue:systemInfo[@"bootTime"] forKey:@"boot_time"];
             [deviceData setValue:systemInfo[@"timezone"] forKey:@"timezone"];
+            
+            NSString *locale = [[NSLocale autoupdatingCurrentLocale] objectForKey:NSLocaleIdentifier];
+            [deviceData setValue:locale forKey:@"locale"];
 
             [outerScope setContextValue:deviceData forKey:@"device"];
 
@@ -264,6 +269,22 @@ SentryCrashIntegration ()
             [outerScope addObserver:self.scopeObserver];
         }];
     }
+    
+    [NSNotificationCenter.defaultCenter addObserver:self
+                                           selector:@selector(currentLocaleDidChange)
+                                               name:NSCurrentLocaleDidChangeNotification
+                                             object:nil];
+}
+
+-(void)currentLocaleDidChange {
+    [SentrySDK.currentHub configureScope:^(SentryScope *_Nonnull scope) {
+        NSMutableDictionary<NSString *, id> *deviceContext = [[NSMutableDictionary alloc] initWithDictionary: scope.contextDictionary[@"device"]];
+        
+        NSString *locale = [[NSLocale autoupdatingCurrentLocale] objectForKey:NSLocaleIdentifier];
+        deviceContext[@"locale"] = locale;
+        
+        [scope setContextValue:deviceContext forKey:@"device"];
+    }];
 }
 
 @end

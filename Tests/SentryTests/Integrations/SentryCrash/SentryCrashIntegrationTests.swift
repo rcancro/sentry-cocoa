@@ -216,6 +216,16 @@ class SentryCrashIntegrationTests: XCTestCase {
         assertContext(context: context)
     }
     
+    func testLocaleChanged() {
+        let sut = fixture.getSut()
+        let hub = fixture.hub
+        SentrySDK.setCurrentHub(hub)
+
+        sut.install(with: Options())
+        
+        TestNotificationCenter.localeDidChange()
+    }
+    
     private func givenCurrentSession() -> SentrySession {
         // serialize sets the timestamp
         let session = SentrySession(jsonObject: fixture.session.serialize())!
